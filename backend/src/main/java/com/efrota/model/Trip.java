@@ -24,12 +24,18 @@ public class Trip {
     private String cargoType;
     private java.time.LocalDate cargoDeadline;
     private BigDecimal cargoValue;
-    private Double driverCommissionRate; // Percentage
+    private Double driverCommissionRate;
     private BigDecimal fuelExpense;
     private BigDecimal tollExpense;
     private BigDecimal foodExpense;
     private BigDecimal unexpectedExpense;
-    private String documents; // URL or description
+
+    private String attachmentName;
+    private String attachmentType;
+
+    @Lob
+    @Column(length = 10000000)
+    private byte[] attachment;
 
     @Enumerated(EnumType.STRING)
     private TripStatus status;

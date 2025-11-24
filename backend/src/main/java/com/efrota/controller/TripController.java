@@ -8,6 +8,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/api/trips")
 @CrossOrigin(origins = "http://localhost:5173")
@@ -28,19 +34,80 @@ public class TripController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public Trip createTrip(@RequestBody Trip trip) {
+    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<Trip> createTrip(
+            @RequestPart("trip") String tripJson,
+            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        Trip trip = mapper.readValue(tripJson, Trip.class);
+
+        if (file != null && !file.isEmpty()) {
+            trip.setAttachment(file.getBytes());
+            trip.setAttachmentName(file.getOriginalFilename());
+            trip.setAttachmentType(file.getContentType());
+        }
+
         calculateValueToDriver(trip);
-        return tripService.save(trip);
+        return ResponseEntity.ok(tripService.save(trip));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Trip> updateTrip(@PathVariable Long id, @RequestBody Trip trip) {
+    @PutMapping(value = "/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<Trip> updateTrip(
+            @PathVariable Long id,
+            @RequestPart("trip") String tripJson,
+            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        Trip tripUpdates = mapper.readValue(tripJson, Trip.class);
+
         return tripService.findById(id)
                 .map(existingTrip -> {
-                    trip.setId(id);
-                    calculateValueToDriver(trip);
-                    return ResponseEntity.ok(tripService.save(trip));
+                    existingTrip.setOrigin(tripUpdates.getOrigin());
+                    existingTrip.setDestination(tripUpdates.getDestination());
+                    existingTrip.setDistance(tripUpdates.getDistance());
+                    existingTrip.setTruck(tripUpdates.getTruck());
+                    existingTrip.setDriver(tripUpdates.getDriver());
+                    existingTrip.setCargoType(tripUpdates.getCargoType());
+                    existingTrip.setCargoValue(tripUpdates.getCargoValue());
+                    existingTrip.setCargoDeadline(tripUpdates.getCargoDeadline());
+                    existingTrip.setDriverCommissionRate(tripUpdates.getDriverCommissionRate());
+                    existingTrip.setFuelExpense(tripUpdates.getFuelExpense());
+                    existingTrip.setTollExpense(tripUpdates.getTollExpense());
+                    existingTrip.setFoodExpense(tripUpdates.getFoodExpense());
+                    existingTrip.setUnexpectedExpense(tripUpdates.getUnexpectedExpense());
+                    existingTrip.setStatus(tripUpdates.getStatus());
+
+                    if (file != null && !file.isEmpty()) {
+                        try {
+                            existingTrip.setAttachment(file.getBytes());
+                            existingTrip.setAttachmentName(file.getOriginalFilename());
+                            existingTrip.setAttachmentType(file.getContentType());
+                        } catch (IOException e) {
+                            throw new RuntimeException("Error processing file", e);
+                        }
+                    }
+
+                    calculateValueToDriver(existingTrip);
+                    return ResponseEntity.ok(tripService.save(existingTrip));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/attachment")
+    public ResponseEntity<?> getAttachment(@PathVariable Long id) {
+        return tripService.findById(id)
+                .map(trip -> {
+                    if (trip.getAttachment() == null) {
+                        return ResponseEntity.notFound().build();
+                    }
+                    return ResponseEntity.ok()
+                            .header(HttpHeaders.CONTENT_DISPOSITION,
+                                    "attachment; filename=\"" + trip.getAttachmentName() + "\"")
+                            .contentType(MediaType.parseMediaType(trip.getAttachmentType()))
+                            .body(trip.getAttachment());
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

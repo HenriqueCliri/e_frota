@@ -25,6 +25,8 @@ const TripList = () => {
     });
     const [editingId, setEditingId] = useState(null);
 
+    const [file, setFile] = useState(null);
+
     useEffect(() => {
         fetchTrips();
         fetchTrucks();
@@ -74,6 +76,10 @@ const TripList = () => {
         setNewTrip(updatedTrip);
     };
 
+    const handleFileChange = (e) => {
+        setFile(e.target.files[0]);
+    };
+
     const handleSelectChange = (e) => {
         const { name, value } = e.target;
         setNewTrip({ ...newTrip, [name]: { id: value } });
@@ -82,10 +88,20 @@ const TripList = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const formData = new FormData();
+            formData.append('trip', JSON.stringify(newTrip));
+            if (file) {
+                formData.append('file', file);
+            }
+
             if (editingId) {
-                await api.put(`/trips/${editingId}`, newTrip);
+                await api.put(`/trips/${editingId}`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
             } else {
-                await api.post('/trips', newTrip);
+                await api.post('/trips', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
             }
             fetchTrips();
             resetForm();
@@ -111,9 +127,9 @@ const TripList = () => {
             tollExpense: '',
             foodExpense: '',
             unexpectedExpense: '',
-            documents: '',
             status: 'PLANNED'
         });
+        setFile(null);
         setEditingId(null);
     };
 
@@ -122,7 +138,6 @@ const TripList = () => {
             ...trip,
             truck: trip.truck ? { id: trip.truck.id } : null,
             driver: trip.driver ? { id: trip.driver.id } : null,
-            // Ensure nulls are empty strings for inputs
             origin: trip.origin || '',
             cargoValue: trip.cargoValue || '',
             cargoDeadline: trip.cargoDeadline || '',
@@ -130,9 +145,9 @@ const TripList = () => {
             fuelExpense: trip.fuelExpense || '',
             tollExpense: trip.tollExpense || '',
             foodExpense: trip.foodExpense || '',
-            unexpectedExpense: trip.unexpectedExpense || '',
-            documents: trip.documents || ''
+            unexpectedExpense: trip.unexpectedExpense || ''
         });
+        setFile(null); // Reset file input on edit
         setEditingId(trip.id);
     };
 
@@ -149,6 +164,24 @@ const TripList = () => {
 
     const handleCancelEdit = () => {
         resetForm();
+    };
+
+    const handleDownload = async (tripId, fileName) => {
+        try {
+            const response = await api.get(`/trips/${tripId}/attachment`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Error downloading file:', error);
+            alert('Erro ao baixar arquivo.');
+        }
     };
 
     return (
@@ -304,14 +337,16 @@ const TripList = () => {
                     {/* Documents */}
                     <div className="md:col-span-2 lg:col-span-3 font-bold text-gray-700 border-b pb-2 mb-2 mt-4">Documentação</div>
 
-                    <input
-                        type="text"
-                        name="documents"
-                        placeholder="Link/Descrição dos Documentos (Manifesto, Seguro, etc)"
-                        value={newTrip.documents}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline md:col-span-2 lg:col-span-3"
-                    />
+                    <div className="md:col-span-2 lg:col-span-3">
+                        <label className="block text-gray-700 text-sm font-bold mb-2">
+                            Anexar Documento (PDF, Imagem)
+                        </label>
+                        <input
+                            type="file"
+                            onChange={handleFileChange}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        />
+                    </div>
 
                     {editingId && (
                         <select
@@ -326,7 +361,7 @@ const TripList = () => {
                         </select>
                     )}
 
-                    <div className="md:col-span-2 lg:col-span-3 flex gap-2 mt-4">
+                    <div className="md:col-span-2 lg:col-span-3 flex gap-2 mt-4" style={{ width: '25%' }}>
                         <button
                             type="submit"
                             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex-1"
@@ -384,6 +419,14 @@ const TripList = () => {
                                     <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                                         <div>{trip.cargoType}</div>
                                         <div className="text-gray-500 text-xs">R$ {trip.cargoValue ? trip.cargoValue.toFixed(2) : '0.00'}</div>
+                                        {trip.attachmentName && (
+                                            <button
+                                                onClick={() => handleDownload(trip.id, trip.attachmentName)}
+                                                className="text-blue-500 hover:text-blue-700 text-xs block mt-1 underline"
+                                            >
+                                                📎 {trip.attachmentName}
+                                            </button>
+                                        )}
                                     </td>
                                     <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                                         <span className={`relative inline-block px-3 py-1 font-semibold leading-tight text-white rounded-full ${trip.status === 'PLANNED' ? 'bg-blue-500' :
