@@ -15,7 +15,7 @@ const Login = () => {
             localStorage.setItem('token', response.data.token);
             navigate('/');
         } catch (err) {
-            setError('Credenciais inválidas');
+            setError(err.response?.data?.error || 'Credenciais inválidas');
         }
     };
 

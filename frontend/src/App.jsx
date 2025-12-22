@@ -7,40 +7,57 @@ import TripList from './components/TripList';
 import ClientList from './components/ClientList';
 import Login from './components/Login';
 
+import Sidebar from './components/Sidebar';
+
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   return token ? children : <Navigate to="/login" />;
 };
 
 function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+
   return (
     <Router>
-      <div className="min-h-screen bg-gray-100">
-        <nav className="bg-blue-600 text-white p-4 shadow-md">
-          <div className="container mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold">E-frota</h1>
-            <ul className="flex space-x-4">
-              <li><Link to="/" className="hover:text-blue-200">Caminhões</Link></li>
-              <li><Link to="/drivers" className="hover:text-blue-200">Motoristas</Link></li>
-              <li><Link to="/trips" className="hover:text-blue-200">Viagens</Link></li>
-              <li><Link to="/maintenances" className="hover:text-blue-200">Manutenções</Link></li>
-              <li><Link to="/clients" className="hover:text-blue-200">Clientes</Link></li>
-              <li><button onClick={() => { localStorage.removeItem('token'); window.location.href = '/login'; }} className="hover:text-blue-200">Sair</button></li>
-            </ul>
-          </div>
-        </nav>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={
+          <div className="flex h-screen bg-gray-100 overflow-hidden relative">
 
-        <div className="container mx-auto p-4">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<PrivateRoute><TruckList /></PrivateRoute>} />
-            <Route path="/drivers" element={<PrivateRoute><DriverList /></PrivateRoute>} />
-            <Route path="/trips" element={<PrivateRoute><TripList /></PrivateRoute>} />
-            <Route path="/maintenances" element={<PrivateRoute><MaintenanceList /></PrivateRoute>} />
-            <Route path="/clients" element={<PrivateRoute><ClientList /></PrivateRoute>} />
-          </Routes>
-        </div>
-      </div>
+            {/* Overlay */}
+            {isSidebarOpen && (
+              <div
+                className="fixed inset-0 bg-black opacity-50 z-40"
+                onClick={() => setIsSidebarOpen(false)}
+              ></div>
+            )}
+
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {/* Hamburger Button */}
+              {!isSidebarOpen && (
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="mb-4 p-2 text-gray-600 hover:text-gray-900 focus:outline-none"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              )}
+
+              <Routes>
+                <Route path="/" element={<PrivateRoute><TruckList /></PrivateRoute>} />
+                <Route path="/drivers" element={<PrivateRoute><DriverList /></PrivateRoute>} />
+                <Route path="/trips" element={<PrivateRoute><TripList /></PrivateRoute>} />
+                <Route path="/maintenances" element={<PrivateRoute><MaintenanceList /></PrivateRoute>} />
+                <Route path="/clients" element={<PrivateRoute><ClientList /></PrivateRoute>} />
+              </Routes>
+            </div>
+          </div>
+        } />
+      </Routes>
     </Router>
   );
 }

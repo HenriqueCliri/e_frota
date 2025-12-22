@@ -19,14 +19,23 @@ public class ClientService {
     }
 
     public Optional<Client> getClientById(Long id) {
+        if (id == null) {
+            return Optional.empty();
+        }
         return clientRepository.findById(id);
     }
 
     public Client saveClient(Client client) {
+        if (client == null) {
+            return null;
+        }
         return clientRepository.save(client);
     }
 
     public void deleteClient(Long id) {
+        if (id == null) {
+            return;
+        }
         clientRepository.deleteById(id);
     }
 }

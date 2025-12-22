@@ -1,60 +1,34 @@
-# E-frota - Sistema de Gestão de Frotas
+# E-frota Fleet Management
 
-Sistema completo de gestão de frotas com backend em Spring Boot e frontend em React.
-
-## 🚀 Tecnologias
-
-### Backend
-- Java 17, Spring Boot 3
-- Spring Security + JWT
-- PostgreSQL
-- Maven
-
-### Frontend
-- React 18, Vite
-- TailwindCSS v4
-- Axios, React Router DOM
-
-## 📋 Funcionalidades
-
-- ✅ Gestão de Caminhões, Motoristas, Viagens
-- ✅ Gestão de Manutenções e Clientes
-- ✅ Autenticação JWT
-- ✅ Banco PostgreSQL
-
-## 🔧 Pré-requisitos
-
+## Prerequisites
 - Java 17+
 - Node.js 18+
-- PostgreSQL 14+
-- Maven 3.8+
+- Docker & Docker Compose
 
-## 📦 Instalação
+## Quick Start
 
-### 1. PostgreSQL
+### 1. Database (PostgreSQL)
+Start the database container:
 ```bash
-sudo -u postgres psql -c "CREATE DATABASE efrota;"
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+docker-compose up -d
 ```
+*Note: Runs on port 5434 to avoid conflicts.*
 
-### 2. Backend
+### 2. Backend (Spring Boot)
+Run the backend application:
 ```bash
 cd backend
 mvn spring-boot:run
 ```
+*API: http://localhost:8080*
 
-### 3. Frontend
+### 3. Frontend (React)
+Run the frontend application:
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
+*UI: http://localhost:5173*
 
-## 🔐 Autenticação
-
-Acesse `http://localhost:5173/login` e registre um usuário via API:
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
-```
+## Authentication
+- **Default Admin**: `admin` / `password`

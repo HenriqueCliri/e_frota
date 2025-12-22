@@ -82,7 +82,6 @@ public class SecurityConfig {
         return source;
     }
 
-    // Inner class for JWT Filter
     public static class JwtAuthenticationFilter extends OncePerRequestFilter {
         private final JwtTokenProvider jwtTokenProvider;
         private final UserDetailsService userDetailsService;

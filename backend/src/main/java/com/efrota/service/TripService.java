@@ -19,14 +19,23 @@ public class TripService {
     }
 
     public Optional<Trip> findById(Long id) {
+        if (id == null) {
+            return Optional.empty();
+        }
         return tripRepository.findById(id);
     }
 
     public Trip save(Trip trip) {
+        if (trip == null) {
+            return null;
+        }
         return tripRepository.save(trip);
     }
 
     public void deleteById(Long id) {
+        if (id == null) {
+            return;
+        }
         tripRepository.deleteById(id);
     }
 }
