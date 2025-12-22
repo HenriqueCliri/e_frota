@@ -20,7 +20,7 @@ const TripList = () => {
         tollExpense: '',
         foodExpense: '',
         unexpectedExpense: '',
-        documents: '',
+
         status: 'PLANNED'
     });
     const [editingId, setEditingId] = useState(null);
