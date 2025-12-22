@@ -103,10 +103,14 @@ public class TripController {
                     if (trip.getAttachment() == null) {
                         return ResponseEntity.notFound().build();
                     }
+                    String attachmentType = trip.getAttachmentType();
+                    if (attachmentType == null) {
+                        attachmentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+                    }
                     return ResponseEntity.ok()
                             .header(HttpHeaders.CONTENT_DISPOSITION,
                                     "attachment; filename=\"" + trip.getAttachmentName() + "\"")
-                            .contentType(MediaType.parseMediaType(trip.getAttachmentType()))
+                            .contentType(MediaType.parseMediaType(attachmentType))
                             .body(trip.getAttachment());
                 })
                 .orElse(ResponseEntity.notFound().build());
